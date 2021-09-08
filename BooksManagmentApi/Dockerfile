@@ -8,4 +8,4 @@ COPY ["BooksManagmentApi/BooksManagmentApi/BooksManagmentApi.csproj", "BooksMana
 RUN dotnet restore "BooksManagmentApi/BooksManagmentApi.csproj"
 COPY . .
 WORKDIR "/src/BooksManagmentApi"
-RUN dotnet build "BooksManagmentApi.csproj" -c Release -o /app/build
+RUN dotnet build "BooksManagmentApi/BooksManagmentApi.csproj" -c Release -o /app/build
