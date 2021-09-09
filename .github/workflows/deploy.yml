@@ -17,13 +17,3 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file BooksManagmentApi/Dockerfile --tag my-image-name:$(date +%s)
 
-    - uses: appleboy/ssh-action@master
-    - name: multiple command
-      with:
-        host: ${{ github.event.inputs.host }}
-        username: ${{ secrets.AWS_SSH_USERNAME }}
-        key: ${{ secrets.AWS_SSH_KEY }}
-        port: ${{ secrets.AWS_SSH_PORT }}
-        script: |
-          whoami
-          ls -al
