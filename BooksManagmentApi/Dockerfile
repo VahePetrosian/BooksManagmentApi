@@ -9,3 +9,11 @@ RUN dotnet restore "BooksManagmentApi/BooksManagmentApi.csproj"
 COPY . .
 WORKDIR "/src/BooksManagmentApi"
 RUN dotnet build "BooksManagmentApi/BooksManagmentApi.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "BooksManagmentApi.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "BooksManagmentApi.dll"]
