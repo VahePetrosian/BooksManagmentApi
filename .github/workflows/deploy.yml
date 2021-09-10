@@ -2,7 +2,10 @@ name: Push image to ECR & run on EC2
 
 on:
   workflow_dispatch:
-
+    inputs:
+      host:
+        description: 'Please provide host address'     
+        required: true
 env:
   AWS_REGION: eu-central-1
   ECR_REPOSITORY: container-repository
