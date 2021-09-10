@@ -1,3 +1,5 @@
+name: Push image to ECR & run on EC2
+
 on:
   workflow_dispatch:
 
@@ -41,3 +43,23 @@ jobs:
           docker build --file BooksManagmentApi/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: SSH to EC2 & run docker
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: whoami
+
+      - name: multiple command
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ github.event.inputs.host }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_KEY }}
+          port: ${{ secrets.EC2_PORT }}
+          script: |
+            whoami
+            ls -al
