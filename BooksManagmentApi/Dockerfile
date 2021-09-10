@@ -11,7 +11,7 @@ WORKDIR "/src/BooksManagmentApi"
 RUN dotnet build "BooksManagmentApi/BooksManagmentApi.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "BooksManagmentApi.csproj" -c Release -o /app/publish
+RUN dotnet publish "BooksManagmentApi/BooksManagmentApi.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
