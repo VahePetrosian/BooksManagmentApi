@@ -49,12 +49,15 @@ jobs:
 
       - name: SSH to EC2 & run docker
         uses: appleboy/ssh-action@master
+        env:
+          IMAGE-TAG: $IMAGE_TAG
         with:
           host: ${{ github.event.inputs.host }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
           port: ${{ secrets.EC2_PORT }}
+          envs: IMAGE-TAG
           script: |
             sudo service docker start
             sudo aws ecr get-login-password  --region eu-central-1 | sudo docker login --username AWS --password-stdin 554236477482.dkr.ecr.eu-central-1.amazonaws.com
-            sudo docker run -it -p 80:80 554236477482.dkr.ecr.eu-central-1.amazonaws.com/container-repository:latest
+            sudo docker run -p 80:80 554236477482.dkr.ecr.eu-central-1.amazonaws.com/container-repository:$IMAGE-TAG
