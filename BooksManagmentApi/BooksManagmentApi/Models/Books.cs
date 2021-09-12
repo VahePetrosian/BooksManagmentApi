@@ -1,6 +1,6 @@
 namespace BooksManagmentApi
 {
-  public class Book
+  public class Books
   {
     public string ISBN { get; set; }
 

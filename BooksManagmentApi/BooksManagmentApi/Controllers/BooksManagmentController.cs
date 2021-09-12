@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.SQS;
+using BooksManagmentApi.Models;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BooksManagmentApi.Controllers
@@ -11,32 +13,31 @@ namespace BooksManagmentApi.Controllers
   [Route("api/v1/[controller]")]
   public class BooksManagmentController : ControllerBase
   {
-    private readonly ILogger<BooksManagmentController> _logger;
+    private readonly IDynamoDBContext _dynamoDbContext;
+    private readonly IAmazonSQS _amazonSQS;
+    private readonly string _sqsUrl = "https://sqs.eu-central-1.amazonaws.com/554236477482/dev-stage-queue-Queue-10HEWR4HNJEYP";
 
-    private List<Book> testData = new List<Book>
+    public BooksManagmentController(
+      IDynamoDBContext dynamoDbContext,
+      IAmazonSQS amazonSQS)
     {
-      new Book { ISBN = "number", Title = "title", Description = "desc" },
-      new Book { ISBN = "number", Title = "title", Description = "desc" },
-      new Book { ISBN = "number", Title = "title", Description = "desc" }
-    };
-
-    public BooksManagmentController(ILogger<BooksManagmentController> logger)
-    {
-      _logger = logger;
+      _dynamoDbContext = dynamoDbContext;
+      _amazonSQS = amazonSQS;
     }
 
     [HttpGet("GetAllBooks")]
-    public async Task<ActionResult<IEnumerable<Book>>> GetAllBooks()
+    public async Task<ActionResult<IEnumerable<Books>>> GetAllBooks()
     {
-      //return db.Books.ToList();
-      return testData;
+      var condition = new List<ScanCondition>();
+      List<Books> books = await _dynamoDbContext.ScanAsync<Books>(condition).GetRemainingAsync();
+      return books;
     }
 
     [HttpGet("GetBook")]
-    public async Task<ActionResult<Book>> GetBook(string isbn)
+    public async Task<ActionResult<Books>> GetBook(string isbn)
     {
-      //var book = db.Find(id);
-      var book = testData.Where(r => r.ISBN == isbn).FirstOrDefault();
+      Books book = await _dynamoDbContext.LoadAsync<Books>(isbn);
+
       if (book == null)
       {
         return NotFound();
@@ -46,11 +47,15 @@ namespace BooksManagmentApi.Controllers
     }
 
     [HttpPost("AddBook")]
-    public async Task<ActionResult<Book>> AddBook(Book book)
+    public async Task<ActionResult<Books>> AddBook(Books book)
     {
       try
       {
-        //db.Add(book);
+        await _dynamoDbContext.SaveAsync(book);
+
+        var msg = new SqsMessage() { Date = DateTime.Now, Message = $"New book with ISBN:{book.ISBN} was added;" };
+        await _amazonSQS.SendMessageAsync(_sqsUrl, JsonSerializer.Serialize(msg));
+
         return Accepted();
       }
       catch (Exception)
@@ -64,7 +69,11 @@ namespace BooksManagmentApi.Controllers
     {
       try
       {
-        //db.Delete(isbn);
+        await _dynamoDbContext.DeleteAsync(isbn);
+
+        var msg = new SqsMessage() { Date = DateTime.Now, Message = $"Book with ISBN:{isbn} was deleted;" };
+        await _amazonSQS.SendMessageAsync(_sqsUrl, JsonSerializer.Serialize(msg));
+
         return Accepted();
       }
       catch (Exception)
@@ -74,11 +83,15 @@ namespace BooksManagmentApi.Controllers
     }
 
     [HttpPut("UpdateBook")]
-    public async Task<ActionResult> UpdatePerson(Book book)
+    public async Task<ActionResult> UpdatePerson(Books book)
     {
       try
       {
-        //db.Update(book);
+        await _dynamoDbContext.SaveAsync(book);
+
+        var msg = new SqsMessage() { Date = DateTime.Now, Message = $"Updates were applied to book with ISBN:{book.ISBN};" };
+        await _amazonSQS.SendMessageAsync(_sqsUrl, JsonSerializer.Serialize(msg));
+
         return Accepted();
       }
       catch (Exception)
