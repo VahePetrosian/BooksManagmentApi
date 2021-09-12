@@ -1,3 +1,6 @@
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.SQS;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +23,12 @@ namespace BooksManagmentApi
     {
       services.AddControllers();
       services.AddSwaggerGen();
+
+      var tmp = Configuration.GetAWSOptions();
+      services.AddDefaultAWSOptions(tmp);
+      services.AddAWSService<IAmazonDynamoDB>();
+      services.AddTransient<IDynamoDBContext, DynamoDBContext>();
+      services.AddAWSService<IAmazonSQS>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
