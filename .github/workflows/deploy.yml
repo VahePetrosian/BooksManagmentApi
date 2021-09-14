@@ -41,15 +41,15 @@ jobs:
       - name: SSH to EC2 & run docker
         uses: appleboy/ssh-action@master
         env:
-          USERNAME: ${{ github.actor }}
-          PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ github.event.inputs.host }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          envs: USERNAME, PASSWORD
+          envs: GHCR_USERNAME, GHCR_PASSWORD
           script: |
             sudo service docker start
-            sudo docker login --username $USERNAME --password $PASSWORD  ghcr.io/vahepetrosian/books_rest_api
+            sudo docker login --username $GHCR_USERNAME --password $GHCR_PASSWORD  ghcr.io/vahepetrosian/books_rest_api
             sudo docker run -d -p 80:80 ghcr.io/vahepetrosian/books_rest_api:latest
