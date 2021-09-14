@@ -2,6 +2,7 @@
 using Amazon.SQS;
 using BooksManagmentApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -15,14 +16,18 @@ namespace BooksManagmentApi.Controllers
   {
     private readonly IDynamoDBContext _dynamoDbContext;
     private readonly IAmazonSQS _amazonSQS;
-    private readonly string _sqsUrl = "https://sqs.eu-central-1.amazonaws.com/554236477482/dev-stage-queue-Queue-10HEWR4HNJEYP";
+    private readonly IConfiguration _configuration;
+    private readonly string _sqsUrl;
 
     public BooksManagmentController(
       IDynamoDBContext dynamoDbContext,
-      IAmazonSQS amazonSQS)
+      IAmazonSQS amazonSQS,
+      IConfiguration configuration)
     {
       _dynamoDbContext = dynamoDbContext;
       _amazonSQS = amazonSQS;
+      _configuration = configuration;
+      _sqsUrl = _configuration["SQS:QueueUrl"];
     }
 
     [HttpGet("GetAllBooks")]
