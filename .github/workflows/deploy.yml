@@ -1,4 +1,4 @@
-name: Push image to ECR & run on EC2
+name: Push image to GHCR & run on EC2
 
 on:
   workflow_dispatch:
@@ -6,58 +6,34 @@ on:
       host:
         description: 'Please provide host address'     
         required: true
-env:
-  AWS_REGION: eu-central-1
-  ECR_REPOSITORY: container-repository
 
-defaults:
-  run:
-    shell: bash
+env:
+  IMAGE_NAME: books_rest_api
 
 jobs:
-  deploy:
-    name: Deploy
+  push:
     runs-on: ubuntu-latest
     permissions:
       packages: write
       contents: read
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
+      - name: Build image
+        run: docker build . --file BooksManagmentApi/Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@aaf69d68aa3fb14c1d5a6be9ac61fe15b48453a2
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+      - name: Push image
         run: |
-          docker build --file BooksManagmentApi/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-
-      - name: SSH to EC2 & run docker
-        uses: appleboy/ssh-action@master
-        env:
-          IMAGE_TAG: ${{ github.sha }}
-        with:
-          host: ${{ github.event.inputs.host }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_KEY }}
-          port: ${{ secrets.EC2_PORT }}
-          envs: IMAGE_TAG
-          script: |
-            sudo service docker start
-            sudo aws ecr get-login-password  --region eu-central-1 | sudo docker login --username AWS --password-stdin 554236477482.dkr.ecr.eu-central-1.amazonaws.com
-            sudo docker run -d -p 80:80 554236477482.dkr.ecr.eu-central-1.amazonaws.com/container-repository:$IMAGE_TAG
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          [ "$VERSION" == "master" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
