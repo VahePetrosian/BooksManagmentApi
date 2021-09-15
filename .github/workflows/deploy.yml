@@ -20,6 +20,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Determine EC2 public address
+        run: |
+          EC2_HOST_ADDRESS = aws ec2 describe-instances --filters Name=tag:'aws:cloudformation:logical-id',Values='BooksApiInstance' --query "Reservations[*].Instances[*].PublicDnsName" --output text
+          echo $EC2_HOST_ADDRESS
+
       - name: Build image
         run: docker build . --file BooksManagmentApi/Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
