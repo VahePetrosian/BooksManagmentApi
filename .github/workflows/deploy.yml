@@ -25,7 +25,7 @@ jobs:
 
       - name: Determine EC2 public address
         run: |
-          echo "EC2_HOST_ADDRESS=$(aws ec2 describe-instances --filters Name=tag:'aws:cloudformation:logical-id',Values='BooksApiInstance' --query 'Reservations[*].Instances[*].PublicDnsName' --output text" >> $GITHUB_ENV
+          echo "EC2_HOST_ADDRESS=$(aws ec2 describe-instances --filters Name=tag:\'aws:cloudformation:logical-id\',Values=\'BooksApiInstance\' --query \'Reservations[*].Instances[*].PublicDnsName\' --output text" >> $GITHUB_ENV
           echo $EC2_HOST_ADDRESS
 
       - name: Build image
