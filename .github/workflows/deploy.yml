@@ -2,10 +2,6 @@ name: Push image to GHCR & run on EC2
 
 on:
   workflow_dispatch:
-    inputs:
-      host:
-        description: 'Please provide host address'     
-        required: true
 
 env:
   IMAGE_NAME: books_rest_api
