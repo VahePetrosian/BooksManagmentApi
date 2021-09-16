@@ -30,6 +30,10 @@ jobs:
           echo 'EOF' >> $GITHUB_ENV
           echo $EC2_HOST_ADDRESS
 
+      - name: Print host address
+        run: |
+          echo IMAGE_ID=$EC2_HOST_ADDRESS
+
       - name: Build image
         run: docker build . --file BooksManagmentApi/Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
