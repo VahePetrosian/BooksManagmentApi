@@ -2,7 +2,11 @@ name: Push image to GHCR & run on EC2
 
 on:
   workflow_dispatch:
-
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+    
 env:
   IMAGE_NAME: books_rest_api
 
@@ -29,10 +33,6 @@ jobs:
           aws ec2 describe-instances --filters Name=tag:'aws:cloudformation:logical-id',Values='BooksApiInstance' --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | sed  '/^$/d' >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
 
-      - name: Print host address
-        run: |
-          echo EC2_HOST_IP=$EC2_HOST_IP
-
       - name: Build image
         run: docker build . --file BooksManagmentApi/Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
@@ -46,8 +46,6 @@ jobs:
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
           [ "$VERSION" == "master" ] && VERSION=latest
-          echo IMAGE_ID=$IMAGE_ID
-          echo VERSION=$VERSION
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
 
@@ -63,6 +61,5 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           envs: GHCR_USERNAME, GHCR_PASSWORD
           script: |
-            sudo service docker start
             sudo docker login --username $GHCR_USERNAME --password $GHCR_PASSWORD  ghcr.io/vahepetrosian/books_rest_api
             sudo docker run -d -p 80:80 ghcr.io/vahepetrosian/books_rest_api:latest
