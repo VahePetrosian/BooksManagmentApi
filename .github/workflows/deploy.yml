@@ -26,7 +26,7 @@ jobs:
       - name: Determine EC2 public address
         run: |
           echo 'EC2_HOST_ADDRESS<<EOF' >> $GITHUB_ENV
-          aws ec2 describe-instances --filters Name=tag:'aws:cloudformation:logical-id',Values='BooksApiInstance' --query 'Reservations[*].Instances[*].PublicDnsName' --output text >> $GITHUB_ENV
+          aws ec2 describe-instances --filters Name=tag:'aws:cloudformation:logical-id',Values='BooksApiInstance' --query 'Reservations[*].Instances[*].PublicDnsName' --output text | sed  '/^$/d' >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
           echo $EC2_HOST_ADDRESS
 
@@ -54,7 +54,7 @@ jobs:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         with:
-          host: $EC2_HOST_ADDRESS
+          host: echo "${EC2_HOST_ADDRESS}"
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
           port: ${{ secrets.EC2_PORT }}
