@@ -61,5 +61,8 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           envs: GHCR_USERNAME, GHCR_PASSWORD
           script: |
-            sudo docker login --username $GHCR_USERNAME --password $GHCR_PASSWORD  ghcr.io/vahepetrosian/books_rest_api
-            sudo docker run -d -p 80:80 ghcr.io/vahepetrosian/books_rest_api:latest
+            sudo service docker start
+            docker stop $(docker ps -a -q)
+            docker rm $(docker ps -a -q)
+            docker login --username $GHCR_USERNAME --password $GHCR_PASSWORD  ghcr.io/vahepetrosian/books_rest_api
+            docker run -d -p 80:80 ghcr.io/vahepetrosian/books_rest_api:latest
