@@ -25,14 +25,13 @@ jobs:
 
       - name: Determine EC2 public address
         run: |
-          echo 'EC2_HOST_ADDRESS<<EOF' >> $GITHUB_ENV
-          aws ec2 describe-instances --filters Name=tag:'aws:cloudformation:logical-id',Values='BooksApiInstance' --query 'Reservations[*].Instances[*].PublicDnsName' --output text | sed  '/^$/d' >> $GITHUB_ENV
+          echo 'EC2_HOST_IP<<EOF' >> $GITHUB_ENV
+          aws ec2 describe-instances --filters Name=tag:'aws:cloudformation:logical-id',Values='BooksApiInstance' --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | sed  '/^$/d' >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
-          echo $EC2_HOST_ADDRESS
 
       - name: Print host address
         run: |
-          echo IMAGE_ID=$EC2_HOST_ADDRESS
+          echo EC2_HOST_IP=$EC2_HOST_IP
 
       - name: Build image
         run: docker build . --file BooksManagmentApi/Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
@@ -58,7 +57,7 @@ jobs:
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         with:
-          host: echo "${EC2_HOST_ADDRESS}"
+          host: $EC2_HOST_IP
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
           port: ${{ secrets.EC2_PORT }}
